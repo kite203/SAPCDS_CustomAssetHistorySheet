@@ -1,0 +1,738 @@
+@AbapCatalog.viewEnhancementCategory: [#NONE]
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Copy of P_AssetHistorySheetCube3-To'
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.usageType:{
+    serviceQuality: #X,
+    sizeCategory: #S,
+    dataClass: #MIXED
+}
+@VDM.viewType: #COMPOSITE
+@VDM.private:true
+
+define view entity ZSFI_P_ASSETHISTORYSHEETCUBE2T
+  with parameters
+    P_AssetAccountingKeyFigureSet : faa_key_figure_set,
+    P_FiscalYear                  : fis_gjahr,
+    P_FiscalPeriod                : fis_poper,
+    P_KeyDate                     : fagl_keydate
+
+  as select from           P_AssetHistorySheetCube4( P_AssetAccountingKeyFigureSet: $parameters.P_AssetAccountingKeyFigureSet ) as Values
+    left outer to one join I_DepreciationAreaForLedger                                                               as DepreciationAreaForLedger    on  DepreciationAreaForLedger.CompanyCode           = Values.CompanyCode
+                                                                                                                                                     and DepreciationAreaForLedger.Ledger                = Values.Ledger
+                                                                                                                                                     and DepreciationAreaForLedger.AssetDepreciationArea = Values.AssetDepreciationArea
+    inner join             I_AssetKeyFigureSetSpec                                                                   as AssetKeyFigureSetSpec        on AssetKeyFigureSetSpec.AssetAccountingKeyFigureSet = $parameters.P_AssetAccountingKeyFigureSet
+    inner join             I_AssetKeyFigureSpecification                                                             as AssetKeyFigureSpec           on  AssetKeyFigureSpec.AssetAccountingKeyFigure      = AssetKeyFigureSetSpec.AssetAccountingKeyFigure
+                                                                                                                                                     and AssetKeyFigureSpec.AssetAcctAnlytlTransClassfctn = Values.AssetAcctTransClassfctn
+                                                                                                                                                     and AssetKeyFigureSpec.SubLedgerAcctLineItemType     = Values.SubLedgerAcctLineItemType
+    left outer to one join I_FixedAsset                                                                              as FixedAsset                   on  FixedAsset.CompanyCode      = Values.CompanyCode
+                                                                                                                                                     and FixedAsset.MasterFixedAsset = Values.MasterFixedAsset
+                                                                                                                                                     and FixedAsset.FixedAsset       = Values.FixedAsset
+    left outer to one join I_FixedAssetForLedger                                                                     as FixedAssetForLedger          on  FixedAssetForLedger.CompanyCode      = Values.CompanyCode
+                                                                                                                                                     and FixedAssetForLedger.MasterFixedAsset = Values.MasterFixedAsset
+                                                                                                                                                     and FixedAssetForLedger.FixedAsset       = Values.FixedAsset
+                                                                                                                                                     and FixedAssetForLedger.Ledger           = Values.Ledger
+    left outer to one join I_FixedAssetCountryData                                                                   as FixedAssetCountryData        on  FixedAssetCountryData.CompanyCode      = Values.CompanyCode
+                                                                                                                                                     and FixedAssetCountryData.MasterFixedAsset = Values.MasterFixedAsset
+                                                                                                                                                     and FixedAssetCountryData.FixedAsset       = Values.FixedAsset
+    left outer to one join I_RealDepreciationAreaByCoCode                                                            as RealDepreciationAreaByCoCode on  RealDepreciationAreaByCoCode.CompanyCode               = Values.CompanyCode
+                                                                                                                                                     and RealDepreciationAreaByCoCode.AssetRealDepreciationArea = Values.AssetDepreciationArea
+    left outer to one join I_FixedAssetAssgmt                                                                        as FixedAssetAssgmt             on  FixedAssetAssgmt.CompanyCode       =  Values.CompanyCode
+                                                                                                                                                     and FixedAssetAssgmt.MasterFixedAsset  =  Values.MasterFixedAsset
+                                                                                                                                                     and FixedAssetAssgmt.FixedAsset        =  Values.FixedAsset
+                                                                                                                                                     and FixedAssetAssgmt.ValidityStartDate <= $parameters.P_KeyDate
+                                                                                                                                                     and FixedAssetAssgmt.ValidityEndDate   >= $parameters.P_KeyDate
+    left outer to one join I_AssetValuationForLedger                                                                 as AssetValuationForLedger      on  AssetValuationForLedger.CompanyCode               =  Values.CompanyCode
+                                                                                                                                                     and AssetValuationForLedger.MasterFixedAsset          =  Values.MasterFixedAsset
+                                                                                                                                                     and AssetValuationForLedger.FixedAsset                =  Values.FixedAsset
+                                                                                                                                                     and AssetValuationForLedger.Ledger                    =  Values.Ledger
+                                                                                                                                                     and AssetValuationForLedger.AssetRealDepreciationArea =  Values.AssetDepreciationArea
+                                                                                                                                                     and AssetValuationForLedger.ValidityStartDate         <= $parameters.P_KeyDate
+                                                                                                                                                     and AssetValuationForLedger.ValidityEndDate           >= $parameters.P_KeyDate
+    left outer to one join I_GlobAssetAssignment                                                                     as GlobAssetAssignment          on  GlobAssetAssignment.CompanyCode           =  Values.CompanyCode
+                                                                                                                                                     and GlobAssetAssignment.MasterFixedAsset      =  Values.MasterFixedAsset
+                                                                                                                                                     and GlobAssetAssignment.FixedAsset            =  Values.FixedAsset
+                                                                                                                                                     and GlobAssetAssignment.ValidityStartDate     <= $parameters.P_KeyDate
+                                                                                                                                                     and AssetValuationForLedger.ValidityStartDate <= $parameters.P_KeyDate
+                                                                                                                                                     and GlobAssetAssignment.ValidityEndDate       >= $parameters.P_KeyDate
+{
+  key Values.CompanyCode,
+  key Values.AssetDepreciationArea,
+  key Values.MasterFixedAsset,
+  key Values.FixedAsset,
+  key Values.Ledger,
+  key Values.FiscalYear,
+  key Values.FiscalPeriod,
+  key Values.SubLedgerAcctLineItemType,
+  key Values.AssetAcctTransClassfctn,
+  key AssetKeyFigureSetSpec.AssetAccountingKeyFigure,
+  key AssetKeyFigureSetSpec.AssetAccountingKeyFigureSet,
+  key Values.AccountingDocument,
+  key Values.LedgerGLLineItem,
+  key Values.TransactionSubitem,
+  key Values.DebitCreditCode,
+
+      Values.LedgerFiscalYear,
+      Values.FiscalYearVariant,
+      Values.FiscalYearPeriod,
+      Values.DepreciationFiscalPeriod,
+      Values.PostingDate,
+
+      Values.ChartOfDepreciation,
+      AssetKeyFigureSetSpec.AssetAccountingSortedKeyFigure,
+      Values.ChartOfAccounts,
+      Values.ControllingArea,
+      Values.Country,
+      Values.CountryChartOfAccounts,
+      Values.FinancialManagementArea,
+      RealDepreciationAreaByCoCode.FinancialStatementVariant,
+      Values.AccountingPrinciple,
+      Values.LedgerGroup,
+      Values.GLAccount,
+      Values.AlternativeGLAccount,
+      Values.GroupMasterFixedAsset,
+      Values.GroupFixedAsset,
+      Values.FinancialAccountType,
+      Values.AccountingDocumentCreationDate,
+      Values.CreationTime,
+      Values.JointVentureCostRecoveryCode,
+      Values.CostCenter,
+      Values.Plant,
+      Values.BusinessArea,
+      Values.PersonnelNumber,
+      Values.Fund,
+      Values.ProfitCenter,
+      Values.Segment,
+      Values.FunctionalArea,
+      Values.FundsCenter,
+      Values.AssetTransactionType,
+      Values.GrantID,
+      Values.BudgetPeriod,
+
+      //APS @Semantics.currencyCode:true
+      Values.CompanyCodeCurrency,
+      //APS @Semantics.currencyCode:true
+      Values.GlobalCurrency,
+      //APS @Semantics.currencyCode:true
+      Values.FunctionalCurrency,
+      //APS @Semantics.currencyCode:true
+      Values.FreeDefinedCurrency1,
+      //APS @Semantics.currencyCode:true
+      Values.FreeDefinedCurrency2,
+      //APS @Semantics.currencyCode:true
+      Values.FreeDefinedCurrency3,
+      //APS @Semantics.currencyCode:true
+      Values.FreeDefinedCurrency4,
+      //APS @Semantics.currencyCode:true
+      Values.FreeDefinedCurrency5,
+      //APS @Semantics.currencyCode:true
+      Values.FreeDefinedCurrency6,
+      //APS @Semantics.currencyCode:true
+      Values.FreeDefinedCurrency7,
+      //APS @Semantics.currencyCode:true
+      Values.FreeDefinedCurrency8,
+
+      @DefaultAggregation:#SUM
+      @Semantics.amount.currencyCode: 'CompanyCodeCurrency'
+      Values.AmountInCompanyCodeCurrency,
+      @DefaultAggregation:#SUM
+      @Semantics.amount.currencyCode: 'GlobalCurrency'
+      Values.AmountInGlobalCurrency,
+      @DefaultAggregation:#SUM
+      @Semantics.amount.currencyCode: 'FunctionalCurrency'
+      Values.AmountInFunctionalCurrency,
+      @DefaultAggregation: #SUM
+      @Semantics.amount.currencyCode: 'FreeDefinedCurrency1'
+      Values.AmountInFreeDefinedCurrency1,
+      @DefaultAggregation: #SUM
+      @Semantics.amount.currencyCode: 'FreeDefinedCurrency2'
+      Values.AmountInFreeDefinedCurrency2,
+      @DefaultAggregation: #SUM
+      @Semantics.amount.currencyCode: 'FreeDefinedCurrency3'
+      Values.AmountInFreeDefinedCurrency3,
+      @DefaultAggregation: #SUM
+      @Semantics.amount.currencyCode: 'FreeDefinedCurrency4'
+      Values.AmountInFreeDefinedCurrency4,
+      @DefaultAggregation: #SUM
+      @Semantics.amount.currencyCode: 'FreeDefinedCurrency5'
+      Values.AmountInFreeDefinedCurrency5,
+      @DefaultAggregation: #SUM
+      @Semantics.amount.currencyCode: 'FreeDefinedCurrency6'
+      Values.AmountInFreeDefinedCurrency6,
+      @DefaultAggregation: #SUM
+      @Semantics.amount.currencyCode: 'FreeDefinedCurrency7'
+      Values.AmountInFreeDefinedCurrency7,
+      @DefaultAggregation: #SUM
+      @Semantics.amount.currencyCode: 'FreeDefinedCurrency8'
+      Values.AmountInFreeDefinedCurrency8,
+
+      Values.CompanyCodeCurrencyRole,//APS - Prefix "Values" must be specified for an expression
+      Values.GlobalCurrencyRole,
+      Values.FunctionalCurrencyRole,
+      Values.FreeDefinedCurrency1Role,
+      Values.FreeDefinedCurrency2Role,
+      Values.FreeDefinedCurrency3Role,
+      Values.FreeDefinedCurrency4Role,
+      Values.FreeDefinedCurrency5Role,
+      Values.FreeDefinedCurrency6Role,
+      Values.FreeDefinedCurrency7Role,
+      Values.FreeDefinedCurrency8Role,
+
+      //APS @Semantics.unitOfMeasure:true
+      FixedAsset.BaseUnit,
+      @DefaultAggregation: #SUM
+      @Semantics: { quantity : {unitOfMeasure: 'BaseUnit'} }
+      Values.Quantity,
+
+      /* Fields from Fixed Asset */
+      FixedAsset.AssetAccountDetermination,
+      FixedAsset.AssetClass,
+      FixedAssetForLedger.AssetCapitalizationDate,
+      FixedAssetForLedger.FirstAcquisitionFiscalYear,
+      FixedAssetForLedger.FirstAcquisitionFiscalPeriod,
+      FixedAssetForLedger.AssetDeactivationDate,
+      FixedAsset.FixedAssetGroup,
+      FixedAsset.Supplier,
+      FixedAsset.AssetSupplierName,
+      FixedAsset.InvestmentOrder,
+      FixedAsset.InventoryIsCounted,
+      FixedAsset.LastInventoryDate,
+      FixedAsset.Inventory,
+      FixedAsset.Group1AssetEvaluationKey,
+      FixedAsset.Group2AssetEvaluationKey,
+      FixedAsset.Group3AssetEvaluationKey,
+      FixedAsset.Group4AssetEvaluationKey,
+      FixedAsset.Group5AssetEvaluationKey,
+      FixedAsset.AssetSerialNumber,
+      FixedAsset.InvestmentProjectWBSElement                   as WBSElementInternalID,
+      FixedAsset.AssetAuthorizationContext,
+
+      /* Fields from Fixed Asset (Time-Dependent Data) */
+      cast(FixedAssetAssgmt.CostCenter as faa_kostl)           as AssetCostCenter,
+      cast(FixedAssetAssgmt.BusinessArea as faa_gsber)         as AssetBusinessArea,
+      cast(FixedAssetAssgmt.Fund as faa_bp_geber)              as AssetFund,
+      cast(FixedAssetAssgmt.ProfitCenter as faa_prctr)         as AssetProfitCenter,
+      cast(FixedAssetAssgmt.Segment as faa_fb_segment)         as AssetSegment,
+      cast(FixedAssetAssgmt.Plant as faa_werks)                as AssetPlant,
+      cast(FixedAssetAssgmt.BudgetPeriod as faa_budget_period) as AssetBudgetPeriod,
+      cast(FixedAssetAssgmt.GrantID as faa_gm_grant_nbr)       as AssetGrant,
+      cast(FixedAssetAssgmt.CostCtrActivityType as faa_lstar)  as AssetCostCtrActivityType,
+      cast(FixedAssetAssgmt.PersonnelNumber as faa_pernr_d)    as AssetPersonnelNumber,
+      cast(FixedAssetAssgmt.FunctionalArea as faa_fkber)       as AssetFunctionalArea,
+      FixedAssetAssgmt.AssetLocation,
+      FixedAssetAssgmt.RealEstateObject,
+      cast(FixedAssetAssgmt.FundsCenter as faa_fistl)          as AssetFundsCenter,
+      FixedAssetAssgmt.Room,
+      FixedAssetAssgmt.VehicleLicensePlateNumber,
+      FixedAssetAssgmt.TaxJurisdiction,
+
+      /* Fields from Fixed Asset Valuation */
+      AssetValuationForLedger.InvestmentSupportMeasure,
+      AssetValuationForLedger.DepreciationStartDate,
+      AssetValuationForLedger.SpecialDeprStartDate,
+      AssetValuationForLedger.DepreciationKey,
+      AssetValuationForLedger.PlannedUsefulLifeInYears,
+      AssetValuationForLedger.PlannedUsefulLifeInPeriods,
+      AssetValuationForLedger.OriglAstUsefulLifeInYears,
+      AssetValuationForLedger.OriglAstUsefulLifeInPerds,
+      AssetValuationForLedger.DeprKeyChangeoverYear,
+      AssetValuationForLedger.DeprKeyChangeoverPeriod,
+      AssetValuationForLedger.VintageYear,
+      AssetValuationForLedger.VintageMonth,
+      AssetValuationForLedger.ReplacementValueIndexSers,
+      AssetValuationForLedger.RplcmtValueAgingIndexSers,
+
+      /* Fields from Fixed Asset Country Data */
+      FixedAssetCountryData.NationalClassification,
+      FixedAssetCountryData.TaxDepreciationGroup,
+      FixedAssetCountryData.JP_PrptyTxRptCity,
+      FixedAssetCountryData.JP_PrptyTxRptClassfctnKey,
+
+      GlobAssetAssignment.RU_AssetOKOF,
+      GlobAssetAssignment.RU_AssetDepreciationGroup
+}
+where
+      Values.FiscalYear                           =  $parameters.P_FiscalYear //APS Prefix "Values" must be specified for an expression
+  and Values.FiscalPeriod                         <= $parameters.P_FiscalPeriod //APS Prefix "Values" must be specified for an expression
+  and Values.AssetAcctAnlytlTransClassfctn is null
+
+//union all select from    P_AssetHistorySheetCube4( P_AssetAccountingKeyFigureSet: $parameters.P_AssetAccountingKeyFigureSet ) as Values
+//  left outer to one join I_DepreciationAreaForLedger                                                               as DepreciationAreaForLedger    on  DepreciationAreaForLedger.CompanyCode           = Values.CompanyCode
+//                                                                                                                                                   and DepreciationAreaForLedger.Ledger                = Values.Ledger
+//                                                                                                                                                   and DepreciationAreaForLedger.AssetDepreciationArea = Values.AssetDepreciationArea
+//  inner join             I_AssetKeyFigureSetSpec                                                                   as AssetKeyFigureSetSpec        on AssetKeyFigureSetSpec.AssetAccountingKeyFigureSet = $parameters.P_AssetAccountingKeyFigureSet
+//  inner join             I_AssetKeyFigureSpecification                                                             as AssetKeyFigureSpec           on  AssetKeyFigureSpec.AssetAccountingKeyFigure      = AssetKeyFigureSetSpec.AssetAccountingKeyFigure
+//                                                                                                                                                   and AssetKeyFigureSpec.AssetAcctAnlytlTransClassfctn = Values.AssetAcctAnlytlTransClassfctn
+//                                                                                                                                                   and AssetKeyFigureSpec.SubLedgerAcctLineItemType     = Values.SubLedgerAcctLineItemType
+//  left outer to one join I_FixedAsset                                                                              as FixedAsset                   on  FixedAsset.CompanyCode      = Values.CompanyCode
+//                                                                                                                                                   and FixedAsset.MasterFixedAsset = Values.MasterFixedAsset
+//                                                                                                                                                   and FixedAsset.FixedAsset       = Values.FixedAsset
+//  left outer to one join I_FixedAssetForLedger                                                                     as FixedAssetForLedger          on  FixedAssetForLedger.CompanyCode      = Values.CompanyCode
+//                                                                                                                                                   and FixedAssetForLedger.MasterFixedAsset = Values.MasterFixedAsset
+//                                                                                                                                                   and FixedAssetForLedger.FixedAsset       = Values.FixedAsset
+//                                                                                                                                                   and FixedAssetForLedger.Ledger           = Values.Ledger
+//  left outer to one join I_FixedAssetCountryData                                                                   as FixedAssetCountryData        on  FixedAssetCountryData.CompanyCode      = Values.CompanyCode
+//                                                                                                                                                   and FixedAssetCountryData.MasterFixedAsset = Values.MasterFixedAsset
+//                                                                                                                                                   and FixedAssetCountryData.FixedAsset       = Values.FixedAsset
+//  left outer to one join I_RealDepreciationAreaByCoCode                                                            as RealDepreciationAreaByCoCode on  RealDepreciationAreaByCoCode.CompanyCode               = Values.CompanyCode
+//                                                                                                                                                   and RealDepreciationAreaByCoCode.AssetRealDepreciationArea = Values.AssetDepreciationArea
+//  left outer to one join I_FixedAssetAssgmt                                                                        as FixedAssetAssgmt             on  FixedAssetAssgmt.CompanyCode       =  Values.CompanyCode
+//                                                                                                                                                   and FixedAssetAssgmt.MasterFixedAsset  =  Values.MasterFixedAsset
+//                                                                                                                                                   and FixedAssetAssgmt.FixedAsset        =  Values.FixedAsset
+//                                                                                                                                                   and FixedAssetAssgmt.ValidityStartDate <= $parameters.P_KeyDate
+//                                                                                                                                                   and FixedAssetAssgmt.ValidityEndDate   >= $parameters.P_KeyDate
+//  left outer to one join I_AssetValuationForLedger                                                                 as AssetValuationForLedger      on  AssetValuationForLedger.CompanyCode               =  Values.CompanyCode
+//                                                                                                                                                   and AssetValuationForLedger.MasterFixedAsset          =  Values.MasterFixedAsset
+//                                                                                                                                                   and AssetValuationForLedger.FixedAsset                =  Values.FixedAsset
+//                                                                                                                                                   and AssetValuationForLedger.Ledger                    =  Values.Ledger
+//                                                                                                                                                   and AssetValuationForLedger.AssetRealDepreciationArea =  Values.AssetDepreciationArea
+//                                                                                                                                                   and AssetValuationForLedger.ValidityStartDate         <= $parameters.P_KeyDate
+//                                                                                                                                                   and AssetValuationForLedger.ValidityEndDate           >= $parameters.P_KeyDate
+//  left outer to one join I_GlobAssetAssignment                                                                     as GlobAssetAssignment          on  GlobAssetAssignment.CompanyCode           =  Values.CompanyCode
+//                                                                                                                                                   and GlobAssetAssignment.MasterFixedAsset      =  Values.MasterFixedAsset
+//                                                                                                                                                   and GlobAssetAssignment.FixedAsset            =  Values.FixedAsset
+//                                                                                                                                                   and GlobAssetAssignment.ValidityStartDate     <= $parameters.P_KeyDate
+//                                                                                                                                                   and AssetValuationForLedger.ValidityStartDate <= $parameters.P_KeyDate
+//                                                                                                                                                   and GlobAssetAssignment.ValidityEndDate       >= $parameters.P_KeyDate
+//{
+//  key Values.CompanyCode,
+//  key Values.AssetDepreciationArea,
+//  key Values.MasterFixedAsset,
+//  key Values.FixedAsset,
+//  key Values.Ledger,
+//  key Values.FiscalYear,
+//  key Values.FiscalPeriod,
+//  key Values.SubLedgerAcctLineItemType,
+//  key Values.AssetAcctTransClassfctn,
+//  key AssetKeyFigureSetSpec.AssetAccountingKeyFigure,
+//  key AssetKeyFigureSetSpec.AssetAccountingKeyFigureSet,
+//  key Values.AccountingDocument,
+//  key Values.LedgerGLLineItem,
+//  key Values.TransactionSubitem,
+//  key Values.DebitCreditCode,
+//
+//      Values.LedgerFiscalYear,
+//      Values.FiscalYearVariant,
+//      Values.FiscalYearPeriod,
+//      Values.FiscalPeriod                                      as DepreciationFiscalPeriod,
+//      Values.PostingDate,
+//
+//      Values.ChartOfDepreciation,
+//      AssetKeyFigureSetSpec.AssetAccountingSortedKeyFigure,
+//      Values.ChartOfAccounts,
+//      Values.ControllingArea,
+//      Values.Country,
+//      Values.CountryChartOfAccounts,
+//      Values.FinancialManagementArea,
+//      RealDepreciationAreaByCoCode.FinancialStatementVariant,
+//      Values.AccountingPrinciple,
+//      Values.LedgerGroup,
+//      Values.GLAccount,
+//      Values.AlternativeGLAccount,
+//      Values.GroupMasterFixedAsset,
+//      Values.GroupFixedAsset,
+//      Values.FinancialAccountType,
+//      Values.AccountingDocumentCreationDate,
+//      Values.CreationTime,
+//      Values.JointVentureCostRecoveryCode,
+//      Values.CostCenter,
+//      Values.Plant,
+//      Values.BusinessArea,
+//      Values.PersonnelNumber,
+//      Values.Fund,
+//      Values.ProfitCenter,
+//      Values.Segment,
+//      Values.FunctionalArea,
+//      Values.FundsCenter,
+//      Values.AssetTransactionType,
+//      Values.GrantID,
+//      Values.BudgetPeriod,
+//
+//      //APS @Semantics.currencyCode:true
+//      Values.CompanyCodeCurrency,
+//      //APS @Semantics.currencyCode:true
+//      Values.GlobalCurrency,
+//      //APS @Semantics.currencyCode:true
+//      Values.FunctionalCurrency,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency1,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency2,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency3,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency4,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency5,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency6,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency7,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency8,
+//
+//      //APS @DefaultAggregation:#SUM
+//      //APS @Semantics.amount.currencyCode: 'CompanyCodeCurrency'
+//      Values.AmountInCompanyCodeCurrency,
+//      //APS @DefaultAggregation:#SUM
+//      //APS @Semantics.amount.currencyCode: 'GlobalCurrency'
+//      Values.AmountInGlobalCurrency,
+//      //APS @DefaultAggregation:#SUM
+//      //APS @Semantics.amount.currencyCode: 'FunctionalCurrency'
+//      Values.AmountInFunctionalCurrency,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency1'
+//      Values.AmountInFreeDefinedCurrency1,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency2'
+//      Values.AmountInFreeDefinedCurrency2,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency3'
+//      Values.AmountInFreeDefinedCurrency3,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency4'
+//      Values.AmountInFreeDefinedCurrency4,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency5'
+//      Values.AmountInFreeDefinedCurrency5,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency6'
+//      Values.AmountInFreeDefinedCurrency6,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency7'
+//      Values.AmountInFreeDefinedCurrency7,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency8'
+//      Values.AmountInFreeDefinedCurrency8,
+//
+//      Values.CompanyCodeCurrencyRole, //APS Prefix "Values" must be specified for an expression
+//      Values.GlobalCurrencyRole, //APS Prefix "Values" must be specified for an expression
+//      Values.FunctionalCurrencyRole, //APS Prefix "Values" must be specified for an expression
+//      Values.FreeDefinedCurrency1Role, //APS Prefix "Values" must be specified for an expression
+//      Values.FreeDefinedCurrency2Role, //APS Prefix "Values" must be specified for an expression
+//      Values.FreeDefinedCurrency3Role, //APS Prefix "Values" must be specified for an expression
+//      Values.FreeDefinedCurrency4Role, //APS Prefix "Values" must be specified for an expression
+//      Values.FreeDefinedCurrency5Role, //APS Prefix "Values" must be specified for an expression
+//      Values.FreeDefinedCurrency6Role, //APS Prefix "Values" must be specified for an expression
+//      Values.FreeDefinedCurrency7Role, //APS Prefix "Values" must be specified for an expression
+//      Values.FreeDefinedCurrency8Role, //APS Prefix "Values" must be specified for an expression
+//
+//      //APS @Semantics.unitOfMeasure:true
+//      FixedAsset.BaseUnit,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics: { quantity : {unitOfMeasure: 'BaseUnit'} }
+//      Values.Quantity,
+//
+//      /* Fields from Fixed Asset */
+//      FixedAsset.AssetAccountDetermination,
+//      FixedAsset.AssetClass,
+//      FixedAssetForLedger.AssetCapitalizationDate,
+//      FixedAssetForLedger.FirstAcquisitionFiscalYear,
+//      FixedAssetForLedger.FirstAcquisitionFiscalPeriod,
+//      FixedAssetForLedger.AssetDeactivationDate,
+//      FixedAsset.FixedAssetGroup,
+//      FixedAsset.Supplier,
+//      FixedAsset.AssetSupplierName,
+//      FixedAsset.InvestmentOrder,
+//      FixedAsset.InventoryIsCounted,
+//      FixedAsset.LastInventoryDate,
+//      FixedAsset.Inventory,
+//      FixedAsset.Group1AssetEvaluationKey,
+//      FixedAsset.Group2AssetEvaluationKey,
+//      FixedAsset.Group3AssetEvaluationKey,
+//      FixedAsset.Group4AssetEvaluationKey,
+//      FixedAsset.Group5AssetEvaluationKey,
+//      FixedAsset.AssetSerialNumber,
+//      FixedAsset.InvestmentProjectWBSElement                   as WBSElementInternalID,
+//      FixedAsset.AssetAuthorizationContext,
+//
+//      /* Fields from Fixed Asset (Time-Dependent Data) */
+//      cast(FixedAssetAssgmt.CostCenter as faa_kostl)           as AssetCostCenter,
+//      cast(FixedAssetAssgmt.BusinessArea as faa_gsber)         as AssetBusinessArea,
+//      cast(FixedAssetAssgmt.Fund as faa_bp_geber)              as AssetFund,
+//      cast(FixedAssetAssgmt.ProfitCenter as faa_prctr)         as AssetProfitCenter,
+//      cast(FixedAssetAssgmt.Segment as faa_fb_segment)         as AssetSegment,
+//      cast(FixedAssetAssgmt.Plant as faa_werks)                as AssetPlant,
+//      cast(FixedAssetAssgmt.BudgetPeriod as faa_budget_period) as AssetBudgetPeriod,
+//      cast(FixedAssetAssgmt.GrantID as faa_gm_grant_nbr)       as AssetGrant,
+//      cast(FixedAssetAssgmt.CostCtrActivityType as faa_lstar)  as AssetCostCtrActivityType,
+//      cast(FixedAssetAssgmt.PersonnelNumber as faa_pernr_d)    as AssetPersonnelNumber,
+//      cast(FixedAssetAssgmt.FunctionalArea as faa_fkber)       as AssetFunctionalArea,
+//      FixedAssetAssgmt.AssetLocation,
+//      FixedAssetAssgmt.RealEstateObject,
+//      cast(FixedAssetAssgmt.FundsCenter as faa_fistl)          as AssetFundsCenter,
+//      FixedAssetAssgmt.Room,
+//      FixedAssetAssgmt.VehicleLicensePlateNumber,
+//      FixedAssetAssgmt.TaxJurisdiction,
+//
+//      /* Fields from Fixed Asset Valuation */
+//      AssetValuationForLedger.InvestmentSupportMeasure,
+//      AssetValuationForLedger.DepreciationStartDate,
+//      AssetValuationForLedger.SpecialDeprStartDate,
+//      AssetValuationForLedger.DepreciationKey,
+//      AssetValuationForLedger.PlannedUsefulLifeInYears,
+//      AssetValuationForLedger.PlannedUsefulLifeInPeriods,
+//      AssetValuationForLedger.OriglAstUsefulLifeInYears,
+//      AssetValuationForLedger.OriglAstUsefulLifeInPerds,
+//      AssetValuationForLedger.DeprKeyChangeoverYear,
+//      AssetValuationForLedger.DeprKeyChangeoverPeriod,
+//      AssetValuationForLedger.VintageYear,
+//      AssetValuationForLedger.VintageMonth,
+//      AssetValuationForLedger.ReplacementValueIndexSers,
+//      AssetValuationForLedger.RplcmtValueAgingIndexSers,
+//
+//      /* Fields from Fixed Asset Country Data */
+//      FixedAssetCountryData.NationalClassification,
+//      FixedAssetCountryData.TaxDepreciationGroup,
+//      FixedAssetCountryData.JP_PrptyTxRptCity,
+//      FixedAssetCountryData.JP_PrptyTxRptClassfctnKey,
+//
+//      GlobAssetAssignment.RU_AssetOKOF,
+//      GlobAssetAssignment.RU_AssetDepreciationGroup
+//}
+//where
+//      Values.FiscalYear                           =  $parameters.P_FiscalYear  //APS Values prefixed is required
+//  and Values.FiscalPeriod                         < $parameters.P_FiscalPeriod //APS Values prefixed is required
+//  and Values.AssetAcctAnlytlTransClassfctn is not null
+
+//union all select from    I_LedgerCompanyCodeCrcyRoles   as LedgerCompanyCodeCrcyRole
+//  inner join             I_FixedAssetPlanValue          as Values                       on  Values.CompanyCode = LedgerCompanyCodeCrcyRole.CompanyCode
+//                                                                                        and Values.Ledger      = LedgerCompanyCodeCrcyRole.Ledger
+//  left outer to one join I_DepreciationAreaForLedger    as DepreciationAreaForLedger    on  DepreciationAreaForLedger.CompanyCode           = Values.CompanyCode
+//                                                                                        and DepreciationAreaForLedger.Ledger                = Values.Ledger
+//                                                                                        and DepreciationAreaForLedger.AssetDepreciationArea = Values.AssetDepreciationArea
+//  inner join             I_AssetKeyFigureSetSpec        as AssetKeyFigureSetSpec        on AssetKeyFigureSetSpec.AssetAccountingKeyFigureSet = $parameters.P_AssetAccountingKeyFigureSet
+//  inner join             I_AssetKeyFigureSpecification  as AssetKeyFigureSpec           on  AssetKeyFigureSpec.AssetAccountingKeyFigure      = AssetKeyFigureSetSpec.AssetAccountingKeyFigure
+//                                                                                        and AssetKeyFigureSpec.AssetAcctAnlytlTransClassfctn = Values.AssetAcctTransClassfctn
+//                                                                                        and AssetKeyFigureSpec.SubLedgerAcctLineItemType     = Values.SubLedgerAcctLineItemType
+//  left outer to one join I_FixedAsset                   as FixedAsset                   on  FixedAsset.CompanyCode      = Values.CompanyCode
+//                                                                                        and FixedAsset.MasterFixedAsset = Values.MasterFixedAsset
+//                                                                                        and FixedAsset.FixedAsset       = Values.FixedAsset
+//  left outer to one join I_FixedAssetForLedger          as FixedAssetForLedger          on  FixedAssetForLedger.CompanyCode      = Values.CompanyCode
+//                                                                                        and FixedAssetForLedger.MasterFixedAsset = Values.MasterFixedAsset
+//                                                                                        and FixedAssetForLedger.FixedAsset       = Values.FixedAsset
+//                                                                                        and FixedAssetForLedger.Ledger           = Values.Ledger
+//  left outer to one join I_FixedAssetCountryData        as FixedAssetCountryData        on  FixedAssetCountryData.CompanyCode      = Values.CompanyCode
+//                                                                                        and FixedAssetCountryData.MasterFixedAsset = Values.MasterFixedAsset
+//                                                                                        and FixedAssetCountryData.FixedAsset       = Values.FixedAsset
+//  inner join             I_CompanyCode                  as CompanyCode                  on CompanyCode.CompanyCode = Values.CompanyCode
+//  left outer to one join I_RealDepreciationAreaByCoCode as RealDepreciationAreaByCoCode on  RealDepreciationAreaByCoCode.CompanyCode               = Values.CompanyCode
+//                                                                                        and RealDepreciationAreaByCoCode.AssetRealDepreciationArea = Values.AssetDepreciationArea
+//  left outer to one join I_FixedAssetAssgmt             as FixedAssetAssgmt             on  FixedAssetAssgmt.CompanyCode       =  Values.CompanyCode
+//                                                                                        and FixedAssetAssgmt.MasterFixedAsset  =  Values.MasterFixedAsset
+//                                                                                        and FixedAssetAssgmt.FixedAsset        =  Values.FixedAsset
+//                                                                                        and FixedAssetAssgmt.ValidityStartDate <= $parameters.P_KeyDate
+//                                                                                        and FixedAssetAssgmt.ValidityEndDate   >= $parameters.P_KeyDate
+//  left outer to one join I_AssetValuationForLedger      as AssetValuationForLedger      on  AssetValuationForLedger.CompanyCode               =  Values.CompanyCode
+//                                                                                        and AssetValuationForLedger.MasterFixedAsset          =  Values.MasterFixedAsset
+//                                                                                        and AssetValuationForLedger.FixedAsset                =  Values.FixedAsset
+//                                                                                        and AssetValuationForLedger.Ledger                    =  Values.Ledger
+//                                                                                        and AssetValuationForLedger.AssetRealDepreciationArea =  Values.AssetDepreciationArea
+//                                                                                        and AssetValuationForLedger.ValidityStartDate         <= $parameters.P_KeyDate
+//                                                                                        and AssetValuationForLedger.ValidityEndDate           >= $parameters.P_KeyDate
+//  left outer to one join I_GlobAssetAssignment          as GlobAssetAssignment          on  GlobAssetAssignment.CompanyCode           =  Values.CompanyCode
+//                                                                                        and GlobAssetAssignment.MasterFixedAsset      =  Values.MasterFixedAsset
+//                                                                                        and GlobAssetAssignment.FixedAsset            =  Values.FixedAsset
+//                                                                                        and GlobAssetAssignment.ValidityStartDate     <= $parameters.P_KeyDate
+//                                                                                        and AssetValuationForLedger.ValidityStartDate <= $parameters.P_KeyDate
+//                                                                                        and GlobAssetAssignment.ValidityEndDate       >= $parameters.P_KeyDate
+//{
+//  key Values.CompanyCode,
+//  key Values.AssetDepreciationArea,
+//  key Values.MasterFixedAsset,
+//  key Values.FixedAsset,
+//  key Values.Ledger,
+//  key Values.FiscalYear,
+//  key Values.FiscalPeriod,
+//  key Values.SubLedgerAcctLineItemType,
+//  key Values.AssetAcctTransClassfctn,
+//  key AssetKeyFigureSetSpec.AssetAccountingKeyFigure,
+//  key AssetKeyFigureSetSpec.AssetAccountingKeyFigureSet,
+//  key cast('' as fis_belnr)                                    as AccountingDocument,
+//  key cast('' as fis_docln)                                    as LedgerGLLineItem,
+//  key cast('000000' as fins_subta)                             as TransactionSubitem,
+//  key cast('' as shkzg)                                        as DebitCreditCode,
+//
+//      cast('0000' as gjahr_pos)                                as LedgerFiscalYear,
+//      LedgerCompanyCodeCrcyRole.FiscalYearVariant,
+//      cast('0000000' as jahrper)                               as FiscalYearPeriod,
+//      Values.FiscalPeriod                                      as DepreciationFiscalPeriod,
+//      cast('00000000' as budat)                                as PostingDate,
+//
+//      Values.ChartOfDepreciation,
+//      AssetKeyFigureSetSpec.AssetAccountingSortedKeyFigure,
+//      CompanyCode.ChartOfAccounts,
+//      CompanyCode.ControllingArea,
+//      CompanyCode.Country,
+//      CompanyCode.CountryChartOfAccounts                       as CountryChartOfAccounts,
+//      CompanyCode.FinancialManagementArea,
+//      RealDepreciationAreaByCoCode.FinancialStatementVariant,
+//      Values.AccountingPrinciple,
+//      Values.LedgerGroup,
+//      cast('' as fagl_hkont)                                   as GLAccount,
+//      cast('' as  fis_altkt_skb1)                              as AlternativeGLAccount,
+//      Values.GroupMasterFixedAsset,
+//      Values.GroupFixedAsset,
+//      Values.FinancialAccountType,
+//      cast('00000000' as fis_cpudt)                            as AccountingDocumentCreationDate,
+//      cast('000000' as fis_cputm)                              as CreationTime,
+//      Values.JointVentureCostRecoveryCode,
+//      cast('' as kostl)                                        as CostCenter,
+//      cast('' as werks_d)                                      as Plant,
+//      cast('' as gsber)                                        as BusinessArea,
+//      cast('' as pernr_d)                                      as PersonnelNumber,
+//      cast('' as bp_geber)                                     as Fund,
+//      cast('' as prctr)                                        as ProfitCenter,
+//      cast('' as fb_segment)                                   as Segment,
+//      cast('' as fm_farea)                                     as FunctionalArea,
+//      cast('' as fistl)                                        as FundsCenter,
+//      cast('' as bwasl)                                        as AssetTransactionType,
+//      cast('' as gm_grant_nbr)                                 as GrantID,
+//      cast('' as fm_budget_period)                             as BudgetPeriod,
+//
+//      //APS @Semantics.currencyCode:true
+//      Values.CompanyCodeCurrency,
+//      //APS @Semantics.currencyCode:true
+//      Values.GlobalCurrency,
+//      //APS @Semantics.currencyCode:true
+//      cast('' as fins_currfc)                                  as FunctionalCurrency,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency1,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency2,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency3,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency4,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency5,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency6,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency7,
+//      //APS @Semantics.currencyCode:true
+//      Values.FreeDefinedCurrency8,
+//
+//      //APS @DefaultAggregation:#SUM
+//      //APS @Semantics.amount.currencyCode: 'CompanyCodeCurrency'
+//      Values.AmountInCompanyCodeCurrency,
+//      //APS @DefaultAggregation:#SUM
+//      //APS @Semantics.amount.currencyCode: 'GlobalCurrency'
+//      Values.AmountInGlobalCurrency,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FunctionalCurrency'
+//      cast(0 as fins_vfccur12)                                 as AmountInFunctionalCurrency,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency1'
+//      Values.AmountInFreeDefinedCurrency1,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency2'
+//      Values.AmountInFreeDefinedCurrency2,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency3'
+//      Values.AmountInFreeDefinedCurrency3,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency4'
+//      Values.AmountInFreeDefinedCurrency4,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency5'
+//      Values.AmountInFreeDefinedCurrency5,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency6'
+//      Values.AmountInFreeDefinedCurrency6,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency7'
+//      Values.AmountInFreeDefinedCurrency7,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics.amount.currencyCode: 'FreeDefinedCurrency8'
+//      Values.AmountInFreeDefinedCurrency8,
+//
+//      LedgerCompanyCodeCrcyRole.CompanyCodeCurrencyRole,
+//      LedgerCompanyCodeCrcyRole.GlobalCurrencyRole,
+//      LedgerCompanyCodeCrcyRole.FunctionalCurrencyRole,
+//      LedgerCompanyCodeCrcyRole.FreeDefinedCurrency1Role,
+//      LedgerCompanyCodeCrcyRole.FreeDefinedCurrency2Role,
+//      LedgerCompanyCodeCrcyRole.FreeDefinedCurrency3Role,
+//      LedgerCompanyCodeCrcyRole.FreeDefinedCurrency4Role,
+//      LedgerCompanyCodeCrcyRole.FreeDefinedCurrency5Role,
+//      LedgerCompanyCodeCrcyRole.FreeDefinedCurrency6Role,
+//      LedgerCompanyCodeCrcyRole.FreeDefinedCurrency7Role,
+//      LedgerCompanyCodeCrcyRole.FreeDefinedCurrency8Role,
+//
+//      //APS @Semantics.unitOfMeasure:true
+//      FixedAsset.BaseUnit,
+//      //APS @DefaultAggregation: #SUM
+//      //APS @Semantics: { quantity : {unitOfMeasure: 'BaseUnit'} }
+//      cast (0 as quan1_12)                                     as Quantity,
+//
+//      /* Fields from Fixed Asset */
+//      FixedAsset.AssetAccountDetermination,
+//      FixedAsset.AssetClass,
+//      FixedAssetForLedger.AssetCapitalizationDate,
+//      FixedAssetForLedger.FirstAcquisitionFiscalYear,
+//      FixedAssetForLedger.FirstAcquisitionFiscalPeriod,
+//      FixedAssetForLedger.AssetDeactivationDate,
+//      FixedAsset.FixedAssetGroup,
+//      FixedAsset.Supplier,
+//      FixedAsset.AssetSupplierName,
+//      FixedAsset.InvestmentOrder,
+//      FixedAsset.InventoryIsCounted,
+//      FixedAsset.LastInventoryDate,
+//      FixedAsset.Inventory,
+//      FixedAsset.Group1AssetEvaluationKey,
+//      FixedAsset.Group2AssetEvaluationKey,
+//      FixedAsset.Group3AssetEvaluationKey,
+//      FixedAsset.Group4AssetEvaluationKey,
+//      FixedAsset.Group5AssetEvaluationKey,
+//      FixedAsset.AssetSerialNumber,
+//      FixedAsset.InvestmentProjectWBSElement                   as WBSElementInternalID,
+//      FixedAsset.AssetAuthorizationContext,
+//
+//      /* Fields from Fixed Asset (Time-Dependent Data) */
+//      cast(FixedAssetAssgmt.CostCenter as faa_kostl)           as AssetCostCenter,
+//      cast(FixedAssetAssgmt.BusinessArea as faa_gsber)         as AssetBusinessArea,
+//      cast(FixedAssetAssgmt.Fund as faa_bp_geber)              as AssetFund,
+//      cast(FixedAssetAssgmt.ProfitCenter as faa_prctr)         as AssetProfitCenter,
+//      cast(FixedAssetAssgmt.Segment as faa_fb_segment)         as AssetSegment,
+//      cast(FixedAssetAssgmt.Plant as faa_werks)                as AssetPlant,
+//      cast(FixedAssetAssgmt.BudgetPeriod as faa_budget_period) as AssetBudgetPeriod,
+//      cast(FixedAssetAssgmt.GrantID as faa_gm_grant_nbr)       as AssetGrant,
+//      cast(FixedAssetAssgmt.CostCtrActivityType as faa_lstar)  as AssetCostCtrActivityType,
+//      cast(FixedAssetAssgmt.PersonnelNumber as faa_pernr_d)    as AssetPersonnelNumber,
+//      cast(FixedAssetAssgmt.FunctionalArea as faa_fkber)       as AssetFunctionalArea,
+//      FixedAssetAssgmt.AssetLocation,
+//      FixedAssetAssgmt.RealEstateObject,
+//      cast(FixedAssetAssgmt.FundsCenter as faa_fistl)          as AssetFundsCenter,
+//      FixedAssetAssgmt.Room,
+//      FixedAssetAssgmt.VehicleLicensePlateNumber,
+//      FixedAssetAssgmt.TaxJurisdiction,
+//
+//      /* Fields from Fixed Asset Valuation */
+//      AssetValuationForLedger.InvestmentSupportMeasure,
+//      AssetValuationForLedger.DepreciationStartDate,
+//      AssetValuationForLedger.SpecialDeprStartDate,
+//      AssetValuationForLedger.DepreciationKey,
+//      AssetValuationForLedger.PlannedUsefulLifeInYears,
+//      AssetValuationForLedger.PlannedUsefulLifeInPeriods,
+//      AssetValuationForLedger.OriglAstUsefulLifeInYears,
+//      AssetValuationForLedger.OriglAstUsefulLifeInPerds,
+//      AssetValuationForLedger.DeprKeyChangeoverYear,
+//      AssetValuationForLedger.DeprKeyChangeoverPeriod,
+//      AssetValuationForLedger.VintageYear,
+//      AssetValuationForLedger.VintageMonth,
+//      AssetValuationForLedger.ReplacementValueIndexSers,
+//      AssetValuationForLedger.RplcmtValueAgingIndexSers,
+//
+//      /* Fields from Fixed Asset Country Data */
+//      FixedAssetCountryData.NationalClassification,
+//      FixedAssetCountryData.TaxDepreciationGroup,
+//      FixedAssetCountryData.JP_PrptyTxRptCity,
+//      FixedAssetCountryData.JP_PrptyTxRptClassfctnKey,
+//
+//      GlobAssetAssignment.RU_AssetOKOF,
+//      GlobAssetAssignment.RU_AssetDepreciationGroup
+//}
+//where
+//      AssetKeyFigureSpec.PlannedValueIsInclusive <> '0'
+//  and Values.FiscalYear                          =  $parameters.P_FiscalYear
+//  and Values.FiscalPeriod                        < $parameters.P_FiscalPeriod
