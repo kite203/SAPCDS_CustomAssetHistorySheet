@@ -1,0 +1,431 @@
+@AbapCatalog.viewEnhancementCategory: [#NONE]
+@VDM.viewType: #COMPOSITE
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@EndUserText.label: 'Asset History Sheet - Cube - APS'
+@ObjectModel.usageType:{
+    serviceQuality: #X,
+    sizeCategory: #S,
+    dataClass: #MIXED
+}
+@Analytics: { dataCategory: #CUBE, internalName: #LOCAL } 
+
+                      
+define view entity ZSFI_I_ASSETHISTORYSHEETCUBE
+  with parameters
+//    P_AssetAccountingKeyFigureSet : faa_key_figure_set,
+    P_FiscalYear                  : fis_gjahr,
+    P_FiscalPeriodFrom                : fis_period_from,
+    P_FiscalPeriodTo                : fis_period_to,
+    P_KeyDate                     : fagl_keydate
+
+  as select from ZSFI_P_AssetHistorySheetCube1( P_FiscalYear: $parameters.P_FiscalYear, P_FiscalPeriodFrom: $parameters.P_FiscalPeriodFrom, P_FiscalPeriodTo: $parameters.P_FiscalPeriodTo, P_KeyDate: $parameters.P_KeyDate )
+
+  association [1]    to I_CompanyCode                 as _CompanyCode                 on  $projection.CompanyCode = _CompanyCode.CompanyCode
+  association [1]    to I_FixedAsset                  as _FixedAsset                  on  $projection.CompanyCode      = _FixedAsset.CompanyCode
+                                                                                      and $projection.MasterFixedAsset = _FixedAsset.MasterFixedAsset
+                                                                                      and $projection.FixedAsset       = _FixedAsset.FixedAsset
+  association [0..1] to I_MasterFixedAsset            as _MasterFixedAsset            on  $projection.CompanyCode      = _MasterFixedAsset.CompanyCode
+                                                                                      and $projection.MasterFixedAsset = _MasterFixedAsset.MasterFixedAsset
+  association [0..1] to I_FixedAssetCountryData       as _FixedAssetCountryData       on  $projection.CompanyCode      = _FixedAssetCountryData.CompanyCode
+                                                                                      and $projection.MasterFixedAsset = _FixedAssetCountryData.MasterFixedAsset
+                                                                                      and $projection.FixedAsset       = _FixedAssetCountryData.FixedAsset
+  association [0..1] to I_FixedAssetGroup             as _FixedAssetGroup             on  $projection.FixedAssetGroup = _FixedAssetGroup.FixedAssetGroup
+  association [0..1] to I_InternalOrder               as _InvestmentOrder             on  $projection.InvestmentOrder = _InvestmentOrder.InternalOrder
+  association [0..1] to I_Group1AssetEvaluationKey    as _Group1AssetEvaluationKey    on  $projection.Group1AssetEvaluationKey = _Group1AssetEvaluationKey.Group1AssetEvaluationKey
+  association [0..1] to I_Group2AssetEvaluationKey    as _Group2AssetEvaluationKey    on  $projection.Group2AssetEvaluationKey = _Group2AssetEvaluationKey.Group2AssetEvaluationKey
+  association [0..1] to I_Group3AssetEvaluationKey    as _Group3AssetEvaluationKey    on  $projection.Group3AssetEvaluationKey = _Group3AssetEvaluationKey.Group3AssetEvaluationKey
+  association [0..1] to I_Group4AssetEvaluationKey    as _Group4AssetEvaluationKey    on  $projection.Group4AssetEvaluationKey = _Group4AssetEvaluationKey.Group4AssetEvaluationKey
+  association [0..1] to I_Group5AssetEvaluationKey    as _Group5AssetEvaluationKey    on  $projection.Group5AssetEvaluationKey = _Group5AssetEvaluationKey.Group5AssetEvaluationKey
+//  association [0..1] to I_UnitOfMeasure               as _UnitOfMeasure               on  $projection.BaseUnit = _UnitOfMeasure.UnitOfMeasure
+  association [0..1] to I_LedgerGroup                 as _LedgerGroup                 on  $projection.LedgerGroup = _LedgerGroup.LedgerGroup
+
+  association [0..1] to I_AssetKeyFigure              as _AssetKeyFigure              on  $projection.AssetAccountingKeyFigure = _AssetKeyFigure.AssetAccountingKeyFigure
+  association [0..1] to I_AssetKeyFigureSet           as _AssetKeyFigureSet           on  $projection.AssetAccountingKeyFigureSet = _AssetKeyFigureSet.AssetAccountingKeyFigureSet
+  association [1]    to I_AssetSortedKeyFigureSetSpec as _AssetSortedKeyFigureSetSpec on  $projection.AssetAccountingKeyFigureSet    = _AssetSortedKeyFigureSetSpec.AssetAccountingKeyFigureSet
+                                                                                      and $projection.AssetAccountingSortedKeyFigure = _AssetSortedKeyFigureSetSpec.AssetAccountingSortedKeyFigure
+  association [0..1] to I_DepreciationAreaForLedger   as _DepreciationArea            on  $projection.CompanyCode           = _DepreciationArea.CompanyCode
+                                                                                      and $projection.Ledger                = _DepreciationArea.Ledger
+                                                                                      and $projection.AssetDepreciationArea = _DepreciationArea.AssetDepreciationArea
+  association [0..1] to I_Ledger                      as _Ledger                      on  $projection.Ledger = _Ledger.Ledger
+  association [0..1] to I_SubLedgerAccLineItemType    as _SubLedgerAccLineItemType    on  $projection.SubLedgerAcctLineItemType = _SubLedgerAccLineItemType.SubLedgerAcctLineItemType
+  association [0..1] to I_MovementCategory            as _AssetAcctTransClassfctn     on  $projection.AssetAcctTransClassfctn = _AssetAcctTransClassfctn.AssetAcctTransClassfctn
+  association [0..1] to I_ChartOfDepreciation         as _ChartOfDepreciation         on  $projection.ChartOfDepreciation = _ChartOfDepreciation.ChartOfDepreciation
+  association [0..1] to I_AssetClass                  as _AssetClass                  on  $projection.AssetClass = _AssetClass.AssetClass
+  association [0..1] to I_AssetAcctDetermination      as _AssetAccountDetermination   on  $projection.AssetAccountDetermination = _AssetAccountDetermination.AssetAccountDetermination
+  association [0..1] to I_ControllingArea             as _ControllingArea             on  $projection.ControllingArea = _ControllingArea.ControllingArea
+  association [0..1] to I_FinancialAccountType        as _FinancialAccountType        on  $projection.FinancialAccountType = _FinancialAccountType.FinancialAccountType
+  association [1]    to I_AccountingPrinciple         as _AccountingPrinciple         on  $projection.AccountingPrinciple = _AccountingPrinciple.AccountingPrinciple
+  association [0..1] to I_AssetTransactionType        as _AssetTransactionType        on  $projection.AssetTransactionType = _AssetTransactionType.AssetTransactionType
+  association [0..*] to I_CostCenter                  as _CostCenter                  on  $projection.CostCenter      = _CostCenter.CostCenter
+                                                                                      and $projection.ControllingArea = _CostCenter.ControllingArea
+  association [0..1] to I_Plant                       as _Plant                       on  $projection.Plant = _Plant.Plant
+  association [0..1] to I_BusinessArea                as _BusinessArea                on  $projection.BusinessArea = _BusinessArea.BusinessArea
+  association [0..*] to I_ProfitCenter                as _ProfitCenter                on  $projection.ProfitCenter    = _ProfitCenter.ProfitCenter
+                                                                                      and $projection.ControllingArea = _ProfitCenter.ControllingArea
+  association [0..1] to I_Segment                     as _Segment                     on  $projection.Segment = _Segment.Segment
+  association [0..1] to I_FunctionalArea              as _FunctionalArea              on  $projection.FunctionalArea = _FunctionalArea.FunctionalArea
+  association [0..1] to I_JournalEntry                as _JournalEntry                on  $projection.CompanyCode        = _JournalEntry.CompanyCode
+                                                                                      and $projection.FiscalYear         = _JournalEntry.FiscalYear
+                                                                                      and $projection.AccountingDocument = _JournalEntry.AccountingDocument
+  association [0..*] to I_CostCenter                  as _AssetCostCenter             on  $projection.ControllingArea = _AssetCostCenter.ControllingArea
+                                                                                      and $projection.AssetCostCenter = _AssetCostCenter.CostCenter
+  association [0..*] to I_CostCenterActivityType      as _AssetCostCenterActivityType on  $projection.AssetCostCtrActivityType = _AssetCostCenterActivityType.CostCtrActivityType
+                                                                                      and $projection.ControllingArea          = _AssetCostCenterActivityType.ControllingArea
+  association [0..1] to I_BusinessArea                as _AssetBusinessArea           on  $projection.AssetBusinessArea = _AssetBusinessArea.BusinessArea
+  association [0..*] to I_ProfitCenter                as _AssetProfitCenter           on  $projection.AssetProfitCenter = _AssetProfitCenter.ProfitCenter
+                                                                                      and $projection.ControllingArea   = _AssetProfitCenter.ControllingArea
+  association [0..1] to I_FunctionalArea              as _AssetFunctionalArea         on  $projection.AssetFunctionalArea = _AssetFunctionalArea.FunctionalArea
+  association [0..1] to I_Segment                     as _AssetSegment                on  $projection.AssetSegment = _AssetSegment.Segment
+  association [0..1] to I_Location                    as _AssetLocation               on  $projection.AssetLocation = _AssetLocation.Location
+                                                                                      and $projection.AssetPlant    = _AssetLocation.Plant
+  association [0..1] to I_Plant                       as _AssetPlant                  on  $projection.AssetPlant = _AssetPlant.Plant
+  association [0..1] to I_DepreciationKey             as _DepreciationKey             on  $projection.ChartOfDepreciation = _DepreciationKey.ChartOfDepreciation
+                                                                                      and $projection.DepreciationKey     = _DepreciationKey.DepreciationKey
+  association [0..1] to I_InvestmentSupportMeasure    as _InvestmentSupportMeasure    on  $projection.ChartOfDepreciation      = _InvestmentSupportMeasure.ChartOfDepreciation
+                                                                                      and $projection.InvestmentSupportMeasure = _InvestmentSupportMeasure.InvestmentSupportMeasure
+  association [0..1] to I_ChartOfAccounts             as _ChartOfAccounts             on  $projection.ChartOfAccounts = _ChartOfAccounts.ChartOfAccounts
+  association [0..1] to I_ChartOfAccounts             as _CountryChartOfAccounts      on  $projection.CountryChartOfAccounts = _CountryChartOfAccounts.ChartOfAccounts
+  association [0..1] to I_GLAccountInChartOfAccounts  as _GLAccountInChartOfAccounts  on  $projection.ChartOfAccounts = _GLAccountInChartOfAccounts.ChartOfAccounts
+                                                                                      and $projection.GLAccount       = _GLAccountInChartOfAccounts.GLAccount
+  association [0..1] to I_GLAccountInChartOfAccounts  as _AlternativeGLAccount        on  $projection.CountryChartOfAccounts = _AlternativeGLAccount.ChartOfAccounts
+                                                                                      and $projection.AlternativeGLAccount   = _AlternativeGLAccount.GLAccount
+  association [0..1] to I_GLAccountInChartOfAccounts  as _AcqnProdnCostGLAccount      on  $projection.ChartOfAccounts        = _AcqnProdnCostGLAccount.ChartOfAccounts
+                                                                                      and $projection.acqnprodncostglaccount = _AcqnProdnCostGLAccount.GLAccount
+  association [0..1] to I_AssetBalanceSheetAccount    as _BalanceSheetAccount         on  $projection.CompanyCode               = _BalanceSheetAccount.CompanyCode
+                                                                                      and $projection.AssetAccountDetermination = _BalanceSheetAccount.AssetAccountDetermination
+                                                                                      and $projection.AssetDepreciationArea     = _BalanceSheetAccount.AssetRealDepreciationArea
+  association [0..1] to I_Supplier                    as _Supplier                    on  $projection.Supplier = _Supplier.Supplier
+  association [0..1] to I_Currency                    as _Currency                    on  _Currency.Currency = $projection.DisplayCurrency
+  association [0..1] to I_CurrencyRole                as _CurrencyRole                on  _CurrencyRole.CurrencyRole = $projection.CurrencyRole
+  association [0..1] to I_SelectedCurrencyBranch      as _SelectedCurrencyBranch      on  _SelectedCurrencyBranch.SelectedCurrencyBranch = $projection.SelectedCurrencyBranch
+
+  association [0..1] to I_FiscalYearForCompanyCode    as _FiscalYear                  on  $projection.FiscalYear  = _FiscalYear.FiscalYear
+                                                                                      and $projection.CompanyCode = _FiscalYear.CompanyCode
+  association [1..1] to I_FiscalYearVariant           as _FiscalYearVariant           on  $projection.FiscalYearVariant = _FiscalYearVariant.FiscalYearVariant
+  association [0..1] to I_FiscalYearPeriodForVariant  as _FiscalYearPeriodForVariant  on  $projection.FiscalYearPeriod  = _FiscalYearPeriodForVariant.FiscalYearPeriod
+                                                                                      and $projection.FiscalYearVariant = _FiscalYearPeriodForVariant.FiscalYearVariant
+  association [0..1] to I_FiscalPeriodForVariant      as _FiscalPeriodForVariant      on  $projection.LedgerFiscalYear  = _FiscalPeriodForVariant.FiscalYear
+                                                                                      and $projection.FiscalPeriod      = _FiscalPeriodForVariant.FiscalPeriod
+                                                                                      and $projection.FiscalYearVariant = _FiscalPeriodForVariant.FiscalYearVariant
+  association [0..1] to I_FinancialManagementArea     as _FinancialManagementArea     on  $projection.FinancialManagementArea = _FinancialManagementArea.FinancialManagementArea
+  association [0..1] to I_Fund                        as _Fund                        on  $projection.FinancialManagementArea = _Fund.FinancialManagementArea
+                                                                                      and $projection.Fund                    = _Fund.Fund
+  association [0..1] to I_BudgetPeriod                as _BudgetPeriod                on  $projection.BudgetPeriod = _BudgetPeriod.BudgetPeriod
+  association [0..1] to I_WBSElementBasicData         as _WBSElement                  on  $projection.WBSElementInternalID = _WBSElement.WBSElementInternalID
+  association [0..1] to I_FixedAssetNatlClfn          as _FixedAssetNatlClfn          on  $projection.Country                = _FixedAssetNatlClfn.Country
+                                                                                      and $projection.NationalClassification = _FixedAssetNatlClfn.NationalClassification
+  association [0..1] to I_TaxDepreciationGroup        as _TaxDepreciationGroup        on  $projection.Country              = _TaxDepreciationGroup.Country
+                                                                                      and $projection.TaxDepreciationGroup = _TaxDepreciationGroup.TaxDepreciationGroup
+  association [0..1] to I_Country                     as _Country                     on  $projection.Country = _Country.Country
+  association [0..1] to I_JP_PrptyTxRptCity           as _JP_PrptyTxRptCity           on  $projection.JP_PrptyTxRptCity = _JP_PrptyTxRptCity.JP_PrptyTxRptCity
+  association [0..1] to I_JP_PrptyTxRptClassfctnKey   as _JP_PrptyTxRptClassfctnKey   on  $projection.JP_PrptyTxRptClassfctnKey = _JP_PrptyTxRptClassfctnKey.JP_PrptyTxRptClassfctnKey
+  association [0..1] to I_RU_AssetDepreciationGroup   as _RU_AssetDepreciationGroup   on  $projection.RU_AssetDepreciationGroup = _RU_AssetDepreciationGroup.RU_AssetDepreciationGroup
+                                                                                      and $projection.Country                   = _RU_AssetDepreciationGroup.Country
+                                                                                      and $projection.RU_AssetOKOF              = _RU_AssetDepreciationGroup.RU_AssetOKOF
+  association [0..1] to I_RU_AssetOKOF                as _RU_AssetOKOF                on  $projection.RU_AssetOKOF = _RU_AssetOKOF.RU_AssetOKOF
+                                                                                      and $projection.Country      = _RU_AssetOKOF.Country
+  association [1]    to I_AssetRedesignSwitchStatus   as _AssetRedesignSwitchStatus   on  _AssetRedesignSwitchStatus.AssetRedesignSwitchIsActive = ''
+                                                                                      or  _AssetRedesignSwitchStatus.AssetRedesignSwitchIsActive = 'X'
+
+  // Association to Extension View
+  association [1..1] to E_FixedAsset                  as _Extension                   on  $projection.MasterFixedAsset = _Extension.MasterFixedAsset
+                                                                                      and $projection.FixedAsset       = _Extension.FixedAsset
+                                                                                      and $projection.CompanyCode      = _Extension.CompanyCode
+{
+      @ObjectModel.foreignKey.association: '_CompanyCode'
+  key CompanyCode,
+      @ObjectModel.foreignKey.association: '_DepreciationArea'
+  key AssetDepreciationArea,
+      @ObjectModel.foreignKey.association: '_MasterFixedAsset'
+  key MasterFixedAsset,
+      @ObjectModel.foreignKey.association: '_FixedAsset'
+  key FixedAsset,
+      @ObjectModel.foreignKey.association: '_Ledger'
+  key Ledger,
+      @ObjectModel.foreignKey.association: '_FiscalYear'
+  key FiscalYear,
+      @ObjectModel.foreignKey.association: '_FiscalPeriodForVariant'
+      @Semantics.fiscal.period: true
+  key FiscalPeriod,
+      @ObjectModel.foreignKey.association: '_SubledgerAccLineItemType'
+  key SubLedgerAcctLineItemType,
+      @ObjectModel.foreignKey.association: '_AssetAcctTransClassfctn'
+  key AssetAcctTransClassfctn,
+      @ObjectModel.foreignKey.association: '_AssetKeyFigure'
+  key AssetAccountingKeyFigure,
+      @ObjectModel.foreignKey.association: '_AssetKeyFigureSet'
+  key AssetAccountingKeyFigureSet,
+      @ObjectModel.foreignKey.association: '_JournalEntry'
+  key AccountingDocument,
+  key LedgerGLLineItem,
+  key TransactionSubitem,
+  key DebitCreditCode,
+      @ObjectModel.foreignKey.association: '_CurrencyRole'
+  key CurrencyRole,
+//  key KeyFigureIsZeroBalance,
+
+      @Semantics.fiscal.year: true
+      @ObjectModel.foreignKey.association: null
+      LedgerFiscalYear,
+      @ObjectModel.foreignKey.association: '_FiscalYearVariant'
+      @Semantics.fiscal.yearVariant: true
+      FiscalYearVariant,
+      @Semantics.fiscal.yearPeriod: true
+      FiscalYearPeriod,
+      DepreciationFiscalPeriod,
+      PostingDate,
+
+      @ObjectModel.foreignKey.association: '_AssetSortedKeyFigureSetSpec'
+      AssetAccountingSortedKeyFigure,
+
+      @ObjectModel.foreignKey.association: '_LedgerGroup'
+      LedgerGroup,
+
+      @ObjectModel.foreignKey.association: '_ChartOfAccounts'
+      ChartOfAccounts,
+
+      @ObjectModel.foreignKey.association: '_AcqnProdnCostGLAccount'
+      _BalanceSheetAccount.AcqnProdnCostGLAccount,
+
+      @ObjectModel.foreignKey.association: '_GLAccountInChartOfAccounts'
+      GLAccount,
+      @ObjectModel.foreignKey.association: '_AlternativeGLAccount'
+      AlternativeGLAccount,
+      GroupMasterFixedAsset,
+      GroupFixedAsset,
+      @ObjectModel.foreignKey.association: '_FinancialAccountType'
+      FinancialAccountType,
+      @Semantics.businessDate.at: true
+      AccountingDocumentCreationDate,
+      CreationTime,
+      JointVentureCostRecoveryCode,
+      @ObjectModel.foreignKey.association: '_ChartOfDepreciation'
+      ChartOfDepreciation,
+
+      @ObjectModel.foreignKey.association: '_CostCenter'
+      CostCenter,
+      @ObjectModel.foreignKey.association: '_Plant'
+      Plant,
+      @ObjectModel.foreignKey.association: '_BusinessArea'
+      BusinessArea,
+      PersonnelNumber,
+      @ObjectModel.foreignKey.association: '_FinancialManagementArea'
+      FinancialManagementArea,
+      @ObjectModel.foreignKey.association: '_Fund'
+      Fund,
+      GrantID,
+      @ObjectModel.foreignKey.association: '_FunctionalArea'
+      FunctionalArea,
+      @ObjectModel.foreignKey.association: '_BudgetPeriod'
+      BudgetPeriod,
+      
+      ZKeyFigureGroup,
+      ZKeyFigure,
+      
+      @ObjectModel.foreignKey.association: '_ProfitCenter'
+      ProfitCenter,
+      @ObjectModel.foreignKey.association: '_Segment'
+      Segment,
+      FundsCenter,
+      @ObjectModel.foreignKey.association: '_AssetTransactionType'
+      AssetTransactionType,
+
+      @ObjectModel.foreignKey.association: '_Country'
+      Country,
+      @ObjectModel.foreignKey.association: '_ControllingArea'
+      ControllingArea,
+      @ObjectModel.foreignKey.association: '_CountryChartOfAccounts'
+      CountryChartOfAccounts,
+
+      FinancialStatementVariant,
+      @ObjectModel.foreignKey.association: '_AccountingPrinciple'
+      AccountingPrinciple,
+
+      @ObjectModel.foreignKey.association: '_SelectedCurrencyBranch'
+      @Environment.sql.passValue : true
+      SelectedCurrencyBranch,
+      //@Semantics.currencyCode:true
+      DisplayCurrency,
+
+      @DefaultAggregation:#SUM
+      @Semantics.amount.currencyCode: 'DisplayCurrency'
+      AmountInCompanyCodeCurrency,
+          //case 
+    @DefaultAggregation:#SUM
+    @Semantics.amount.currencyCode: 'DisplayCurrency'
+    ReprtingAmtInDisplayCurrency,
+
+
+      /* Fields from Fixed Asset */
+      @ObjectModel.foreignKey.association: '_AssetAccountDetermination'
+      AssetAccountDetermination,
+      @ObjectModel.foreignKey.association: '_AssetClass'
+      AssetClass,
+      AssetCapitalizationDate,
+      FirstAcquisitionFiscalYear,
+      FirstAcquisitionFiscalPeriod,
+      AssetDeactivationDate,
+      @ObjectModel.foreignKey.association: '_FixedAssetGroup'
+      FixedAssetGroup,
+      @ObjectModel.foreignKey.association: '_Supplier'
+      Supplier,
+      AssetSupplierName,
+      @ObjectModel.foreignKey.association: '_InvestmentOrder'
+      InvestmentOrder,
+      InventoryIsCounted,
+      LastInventoryDate,
+      Inventory,
+      @ObjectModel.foreignKey.association: '_Group1AssetEvaluationKey'
+      Group1AssetEvaluationKey,
+      @ObjectModel.foreignKey.association: '_Group2AssetEvaluationKey'
+      Group2AssetEvaluationKey,
+      @ObjectModel.foreignKey.association: '_Group3AssetEvaluationKey'
+      Group3AssetEvaluationKey,
+      @ObjectModel.foreignKey.association: '_Group4AssetEvaluationKey'
+      Group4AssetEvaluationKey,
+      @ObjectModel.foreignKey.association: '_Group5AssetEvaluationKey'
+      Group5AssetEvaluationKey,
+      AssetSerialNumber,
+      @Consumption.hidden: true
+      WBSElementInternalID,
+      @Consumption.hidden: true
+      AssetAuthorizationContext,
+
+      /* Fields from Fixed Asset (Time-Dependent Data) */
+      @ObjectModel.foreignKey.association: '_AssetCostCenter'
+      AssetCostCenter,
+      @ObjectModel.foreignKey.association: '_AssetBusinessArea'
+      AssetBusinessArea,
+      AssetFund,
+      @ObjectModel.foreignKey.association: '_AssetProfitCenter'
+      AssetProfitCenter,
+      @ObjectModel.foreignKey.association: '_AssetSegment'
+      AssetSegment,
+      @ObjectModel.foreignKey.association: '_AssetPlant'
+      AssetPlant,
+      AssetBudgetPeriod,
+      AssetGrant,
+      @ObjectModel.foreignKey.association: '_AssetCostCenterActivityType'
+      AssetCostCtrActivityType,
+      AssetPersonnelNumber,
+      @ObjectModel.foreignKey.association: '_AssetFunctionalArea'
+      AssetFunctionalArea,
+      @ObjectModel.foreignKey.association: '_AssetLocation'
+      AssetLocation,
+      RealEstateObject,
+      AssetFundsCenter,
+      Room,
+      VehicleLicensePlateNumber,
+      TaxJurisdiction,
+
+      /* Fields from Fixed Asset Valuation */
+      @ObjectModel.foreignKey.association: '_InvestmentSupportMeasure'
+      InvestmentSupportMeasure,
+      DepreciationStartDate,
+      SpecialDeprStartDate,
+      @ObjectModel.foreignKey.association: '_DepreciationKey'
+      DepreciationKey,
+      PlannedUsefulLifeInYears,
+      PlannedUsefulLifeInPeriods,
+      OriglAstUsefulLifeInYears,
+      OriglAstUsefulLifeInPerds,
+      DeprKeyChangeoverYear,
+      DeprKeyChangeoverPeriod,
+      VintageYear,
+      VintageMonth,
+      ReplacementValueIndexSers,
+      RplcmtValueAgingIndexSers,
+
+      /* Fields from Fixed Asset Country Data */
+      @ObjectModel.foreignKey.association: '_FixedAssetNatlClfn'
+      NationalClassification,
+      @ObjectModel.foreignKey.association: '_TaxDepreciationGroup'
+      TaxDepreciationGroup,
+      @ObjectModel.foreignKey.association: '_JP_PrptyTxRptCity'
+      JP_PrptyTxRptCity,
+      @ObjectModel.foreignKey.association: '_JP_PrptyTxRptClassfctnKey'
+      JP_PrptyTxRptClassfctnKey,
+
+      @ObjectModel.foreignKey.association: '_RU_AssetOKOF'
+      RU_AssetOKOF,
+      @ObjectModel.foreignKey.association: '_RU_AssetDepreciationGroup'
+      RU_AssetDepreciationGroup,
+
+      _WBSElement.WBSElementExternalID,
+
+      /*Associations */
+      _CompanyCode,
+      _CountryChartOfAccounts,
+      _DepreciationArea,
+      _ChartOfAccounts,
+      _ControllingArea,
+      _MasterFixedAsset,
+      _FixedAsset,
+      _AssetAccountDetermination,
+      _AssetClass,
+      _Ledger,
+      _FiscalYear,
+      _JournalEntry,
+      _SubLedgerAccLineItemType,
+      _LedgerGroup,
+      _GLAccountInChartOfAccounts,
+      _AlternativeGLAccount,
+      _AssetAcctTransClassfctn,
+      _FinancialAccountType,
+      _ChartOfDepreciation,
+      _AccountingPrinciple,
+      _CostCenter,
+      _Plant,
+      _BusinessArea,
+      _ProfitCenter,
+      _Segment,
+      _FunctionalArea,
+      _AssetTransactionType,
+      _AssetCostCenter,
+      _AssetBusinessArea,
+      _AssetProfitCenter,
+      _AssetSegment,
+      _AssetPlant,
+      _AssetCostCenterActivityType,
+      _AssetFunctionalArea,
+      _AssetLocation,
+      _AssetKeyFigure,
+      _AssetKeyFigureSet,
+      _AssetSortedKeyFigureSetSpec,
+      _Currency,
+      _CurrencyRole,
+      _FixedAssetGroup,
+      _InvestmentOrder,
+//      _UnitOfMeasure,
+      _Group1AssetEvaluationKey,
+      _Group2AssetEvaluationKey,
+      _Group3AssetEvaluationKey,
+      _Group4AssetEvaluationKey,
+      _Group5AssetEvaluationKey,
+      _InvestmentSupportMeasure,
+      _DepreciationKey,
+      _AcqnProdnCostGLAccount,
+      _FiscalYearVariant,
+      _FiscalYearPeriodForVariant,
+      _FiscalPeriodForVariant,
+      _FixedAssetCountryData,
+      _FixedAssetNatlClfn,
+      _TaxDepreciationGroup,
+      _Country,
+      _FinancialManagementArea,
+      _Fund,
+      _BudgetPeriod,
+      _Supplier,
+      _SelectedCurrencyBranch,
+      _JP_PrptyTxRptCity,
+      _JP_PrptyTxRptClassfctnKey,
+      _RU_AssetDepreciationGroup,
+      _RU_AssetOKOF,
+      @Consumption.hidden: true
+      _AssetRedesignSwitchStatus //for DCL
+}
+where
+  AssetAccountingKeyFigureSet = 'AHS' //fixed
+  and AssetDepreciationArea = '01' //fixed
+  and Ledger = '0L' //fixed
