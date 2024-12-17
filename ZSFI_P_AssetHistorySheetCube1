@@ -1,0 +1,414 @@
+@AbapCatalog.viewEnhancementCategory: [#NONE]
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'ZSFI_P_AssetHistorySheetCube0'
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.usageType:{
+    serviceQuality: #X,
+    sizeCategory: #S,
+    dataClass: #MIXED
+}
+@VDM.viewType: #COMPOSITE
+@VDM.private:true
+define view entity ZSFI_P_AssetHistorySheetCube1
+  with parameters
+//    P_AssetAccountingKeyFigureSet : faa_key_figure_set,
+    P_FiscalYear                  : fis_gjahr,
+    P_FiscalPeriodFrom                : fis_poper,
+    P_FiscalPeriodTo                : fis_poper,
+    P_KeyDate                     : fagl_keydate
+
+  as select from ZSFI_P_ASSETHISTORYSHEETCUBE2F( P_AssetAccountingKeyFigureSet: 'AHS', P_FiscalYear: $parameters.P_FiscalYear, P_FiscalPeriod: $parameters.P_FiscalPeriodFrom, P_KeyDate: $parameters.P_KeyDate ) as zBal
+
+{
+    key CompanyCode,
+    key AssetDepreciationArea,
+    key MasterFixedAsset,
+    key FixedAsset,
+    key Ledger,
+    key FiscalYear,
+    key FiscalPeriod,
+    key SubLedgerAcctLineItemType,
+    key AssetAcctTransClassfctn,
+    key AssetAccountingKeyFigure,
+    key AssetAccountingKeyFigureSet,
+    key AccountingDocument,
+    key LedgerGLLineItem,
+    key TransactionSubitem,
+    key DebitCreditCode,
+    key cast(CompanyCodeCurrencyRole as fins_curtype)                 as CurrencyRole,
+    //key KeyFigureIsZeroBalance,
+    LedgerFiscalYear,
+    FiscalYearVariant,
+    FiscalYearPeriod,
+    DepreciationFiscalPeriod,
+    PostingDate,
+    ChartOfDepreciation,
+    AssetAccountingSortedKeyFigure,
+    ChartOfAccounts,
+    ControllingArea,
+    Country,
+    CountryChartOfAccounts,
+    FinancialManagementArea,
+    FinancialStatementVariant,
+    AccountingPrinciple,
+    LedgerGroup,
+    GLAccount,
+    AlternativeGLAccount,
+    GroupMasterFixedAsset,
+    GroupFixedAsset,
+    FinancialAccountType,
+    AccountingDocumentCreationDate,
+    CreationTime,
+    JointVentureCostRecoveryCode,
+    CostCenter,
+    Plant,
+    BusinessArea,
+    PersonnelNumber,
+    Fund,
+    ProfitCenter,
+    Segment,
+    FunctionalArea,
+    FundsCenter,
+    AssetTransactionType,
+    GrantID,
+    BudgetPeriod,
+    
+        case left(AssetAccountingSortedKeyFigure, 6)  
+        when '000001' then '1.APC'
+        when '000002' then '1.APC'
+        when '000005' then '1.APC'
+        when '000006' then '1.APC'
+        when '000007' then '1.APC'
+        when '000008' then '1.APC'
+        when '000009' then '3.Revaluation'
+        when '000010' then '3.Revaluation'
+        when '000011' then '2.Depreciation'
+        when '000012' then '2.Depreciation'
+        when '000015' then '2.Depreciation'
+        when '000016' then '2.Depreciation'
+        when '000017' then '2.Depreciation'
+        when '000018' then '2.Depreciation'
+        when '000019' then '2.Depreciation'
+        when '000021' then '3.Revaluation'
+        when '000022' then '3.Revaluation'
+        when '000023' then '4.NBV'
+        when '000024' then '4.NBV'
+    end as ZKeyFigureGroup,
+    
+    case left(AssetAccountingSortedKeyFigure, 6)   
+        when '000001' then '0.FY Start'
+        when '000002' then '2.Addition'
+        when '000005' then '2.Addition'
+        when '000006' then '3.Retirement'
+        when '000007' then '4.Transfer'
+        when '000008' then '1.Opening'
+        //when '000008' then '6.Ending'
+        when '000009' then '6.Ending'
+        when '000010' then '6.Ending'       
+        when '000011' then '0.FY Start'
+        when '000012' then '2.Addition'
+        when '000015' then '2.Addition'
+        when '000016' then '2.Addition'
+        when '000017' then '3.Retirement'
+        when '000018' then '4.Transfer'
+        when '000019' then '1.Opening'
+        //when '000019' then '6.Ending'
+        when '000021' then '6.Ending'
+        when '000022' then '6.Ending'
+        when '000023' then '0.FY Start'
+        when '000024' then '1.Opening'
+        //when '000024' then '6.Ending'
+    end as ZKeyFigure,        
+    
+    cast(CompanyCodeCurrency as vdm_v_display_currency)           as DisplayCurrency,
+    
+    //case 
+    @DefaultAggregation:#SUM
+    @Semantics.amount.currencyCode: 'DisplayCurrency'
+    AmountInCompanyCodeCurrency,
+    
+    
+    //case 
+    @DefaultAggregation:#SUM
+    @Semantics.amount.currencyCode: 'DisplayCurrency'
+    
+        case left(AssetAccountingSortedKeyFigure, 6)   
+        when '000001' then cast( 0 as abap.curr( 23, 2 ) )
+        when '000002' then cast( 0 as abap.curr( 23, 2 ) ) - zBal.AmountInCompanyCodeCurrency
+        when '000005' then cast( 0 as abap.curr( 23, 2 ) ) - zBal.AmountInCompanyCodeCurrency
+        when '000006' then cast( 0 as abap.curr( 23, 2 ) ) - zBal.AmountInCompanyCodeCurrency
+        when '000007' then cast( 0 as abap.curr( 23, 2 ) ) - zBal.AmountInCompanyCodeCurrency
+        when '000008' then zBal.AmountInCompanyCodeCurrency
+        when '000009' then cast( 0 as abap.curr( 23, 2 ) )
+        when '000010' then cast( 0 as abap.curr( 23, 2 ) ) - zBal.AmountInCompanyCodeCurrency
+        when '000011' then cast( 0 as abap.curr( 23, 2 ) )
+        when '000012' then cast( 0 as abap.curr( 23, 2 ) ) - zBal.AmountInCompanyCodeCurrency
+        when '000015' then cast( 0 as abap.curr( 23, 2 ) ) - zBal.AmountInCompanyCodeCurrency
+        when '000016' then cast( 0 as abap.curr( 23, 2 ) ) - zBal.AmountInCompanyCodeCurrency
+        when '000017' then cast( 0 as abap.curr( 23, 2 ) ) - zBal.AmountInCompanyCodeCurrency
+        when '000018' then cast( 0 as abap.curr( 23, 2 ) ) - zBal.AmountInCompanyCodeCurrency
+        when '000019' then zBal.AmountInCompanyCodeCurrency
+        when '000021' then cast( 0 as abap.curr( 23, 2 ) )
+        when '000022' then cast( 0 as abap.curr( 23, 2 ) ) - zBal.AmountInCompanyCodeCurrency
+        when '000023' then cast( 0 as abap.curr( 23, 2 ) )
+        when '000024' then zBal.AmountInCompanyCodeCurrency
+    end as ReprtingAmtInDisplayCurrency,        
+
+
+    cast('10' as fis_selected_currency_branch)                    as SelectedCurrencyBranch,
+
+    AssetAccountDetermination,
+    AssetClass,
+    AssetCapitalizationDate,
+    FirstAcquisitionFiscalYear,
+    FirstAcquisitionFiscalPeriod,
+    AssetDeactivationDate,
+    FixedAssetGroup,
+    Supplier,
+    AssetSupplierName,
+    InvestmentOrder,
+    InventoryIsCounted,
+    LastInventoryDate,
+    Inventory,
+    Group1AssetEvaluationKey,
+    Group2AssetEvaluationKey,
+    Group3AssetEvaluationKey,
+    Group4AssetEvaluationKey,
+    Group5AssetEvaluationKey,
+    AssetSerialNumber,
+    WBSElementInternalID,
+    AssetAuthorizationContext,
+    AssetCostCenter,
+    AssetBusinessArea,
+    AssetFund,
+    AssetProfitCenter,
+    AssetSegment,
+    AssetPlant,
+    AssetBudgetPeriod,
+    AssetGrant,
+    AssetCostCtrActivityType,
+    AssetPersonnelNumber,
+    AssetFunctionalArea,
+    AssetLocation,
+    RealEstateObject,
+    AssetFundsCenter,
+    Room,
+    VehicleLicensePlateNumber,
+    TaxJurisdiction,
+    InvestmentSupportMeasure,
+    DepreciationStartDate,
+    SpecialDeprStartDate,
+    DepreciationKey,
+    PlannedUsefulLifeInYears,
+    PlannedUsefulLifeInPeriods,
+    OriglAstUsefulLifeInYears,
+    OriglAstUsefulLifeInPerds,
+    DeprKeyChangeoverYear,
+    DeprKeyChangeoverPeriod,
+    VintageYear,
+    VintageMonth,
+    ReplacementValueIndexSers,
+    RplcmtValueAgingIndexSers,
+    NationalClassification,
+    TaxDepreciationGroup,
+    JP_PrptyTxRptCity,
+    JP_PrptyTxRptClassfctnKey,
+    RU_AssetOKOF,
+    RU_AssetDepreciationGroup
+}
+
+where
+  AssetAccountingKeyFigureSet = 'AHS'
+  
+union all select from ZSFI_P_ASSETHISTORYSHEETCUBE2T( P_AssetAccountingKeyFigureSet: 'AHS', P_FiscalYear: $parameters.P_FiscalYear, P_FiscalPeriod: $parameters.P_FiscalPeriodTo, P_KeyDate: $parameters.P_KeyDate ) as zBal
+
+{
+    key CompanyCode,
+    key AssetDepreciationArea,
+    key MasterFixedAsset,
+    key FixedAsset,
+    key Ledger,
+    key FiscalYear,
+    key FiscalPeriod,
+    key SubLedgerAcctLineItemType,
+    key AssetAcctTransClassfctn,
+    key AssetAccountingKeyFigure,
+    key AssetAccountingKeyFigureSet,
+    key AccountingDocument,
+    key LedgerGLLineItem,
+    key TransactionSubitem,
+    key DebitCreditCode,
+    key cast(CompanyCodeCurrencyRole as fins_curtype)                 as CurrencyRole,
+    //key KeyFigureIsZeroBalance,
+    LedgerFiscalYear,
+    FiscalYearVariant,
+    FiscalYearPeriod,
+    DepreciationFiscalPeriod,
+    PostingDate,
+    ChartOfDepreciation,
+    AssetAccountingSortedKeyFigure,
+    ChartOfAccounts,
+    ControllingArea,
+    Country,
+    CountryChartOfAccounts,
+    FinancialManagementArea,
+    FinancialStatementVariant,
+    AccountingPrinciple,
+    LedgerGroup,
+    GLAccount,
+    AlternativeGLAccount,
+    GroupMasterFixedAsset,
+    GroupFixedAsset,
+    FinancialAccountType,
+    AccountingDocumentCreationDate,
+    CreationTime,
+    JointVentureCostRecoveryCode,
+    CostCenter,
+    Plant,
+    BusinessArea,
+    PersonnelNumber,
+    Fund,
+    ProfitCenter,
+    Segment,
+    FunctionalArea,
+    FundsCenter,
+    AssetTransactionType,
+    GrantID,
+    BudgetPeriod,
+        case left(AssetAccountingSortedKeyFigure, 6)  
+        when '000001' then '1.APC'
+        when '000002' then '1.APC'
+        when '000005' then '1.APC'
+        when '000006' then '1.APC'
+        when '000007' then '1.APC'
+        when '000008' then '1.APC'
+        when '000009' then '3.Revaluation'
+        when '000010' then '3.Revaluation'
+        when '000011' then '2.Depreciation'
+        when '000012' then '2.Depreciation'
+        when '000015' then '2.Depreciation'
+        when '000016' then '2.Depreciation'
+        when '000017' then '2.Depreciation'
+        when '000018' then '2.Depreciation'
+        when '000019' then '2.Depreciation'
+        when '000021' then '3.Revaluation'
+        when '000022' then '3.Revaluation'
+        when '000023' then '4.NBV'
+        when '000024' then '4.NBV'
+    end as ZKeyFigureGroup,
+    
+    case left(AssetAccountingSortedKeyFigure, 6)   
+        when '000001' then '0.FY Start'
+        when '000002' then '2.Addition'
+        when '000005' then '2.Addition'
+        when '000006' then '3.Retirement'
+        when '000007' then '4.Transfer'
+        //when '000008' then '1.Opening'
+        when '000008' then '6.Ending'
+        when '000009' then '6.Ending'
+        when '000010' then '6.Ending'        
+        when '000011' then '0.FY Start'
+        when '000012' then '2.Addition'
+        when '000015' then '2.Addition'
+        when '000016' then '2.Addition'
+        when '000017' then '3.Retirement'
+        when '000018' then '4.Transfer'
+        //when '000019' then '1.Opening'
+        when '000019' then '6.Ending'
+        when '000021' then '6.Ending'
+        when '000022' then '6.Ending'
+        when '000023' then '0.FY Start'
+        //when '000024' then '1.Opening'
+        when '000024' then '6.Ending'
+    end as ZKeyFigure,        
+    
+    cast(CompanyCodeCurrency as vdm_v_display_currency)           as DisplayCurrency,
+
+    AmountInCompanyCodeCurrency,
+    
+    /* case left(AssetAccountingSortedKeyFigure, 6)   
+        when '000001' then zBal.AmountInCompanyCodeCurrency
+        when '000002' then zBal.AmountInCompanyCodeCurrency
+        when '000005' then zBal.AmountInCompanyCodeCurrency
+        when '000006' then zBal.AmountInCompanyCodeCurrency
+        when '000007' then zBal.AmountInCompanyCodeCurrency
+        when '000008' then zBal.AmountInCompanyCodeCurrency
+        when '000009' then zBal.AmountInCompanyCodeCurrency
+        when '000011' then zBal.AmountInCompanyCodeCurrency
+        when '000012' then zBal.AmountInCompanyCodeCurrency
+        when '000015' then zBal.AmountInCompanyCodeCurrency
+        when '000016' then zBal.AmountInCompanyCodeCurrency
+        when '000017' then zBal.AmountInCompanyCodeCurrency
+        when '000018' then zBal.AmountInCompanyCodeCurrency
+        when '000019' then zBal.AmountInCompanyCodeCurrency
+        when '000021' then zBal.AmountInCompanyCodeCurrency
+        when '000022' then zBal.AmountInCompanyCodeCurrency
+        when '000023' then zBal.AmountInCompanyCodeCurrency
+        when '000024' then zBal.AmountInCompanyCodeCurrency
+    end as ReprtingAmtInDisplayCurrency,  */
+    zBal.AmountInCompanyCodeCurrency as ReprtingAmtInDisplayCurrency,      
+
+
+    cast('10' as fis_selected_currency_branch)                    as SelectedCurrencyBranch,
+    
+    AssetAccountDetermination,
+    AssetClass,
+    AssetCapitalizationDate,
+    FirstAcquisitionFiscalYear,
+    FirstAcquisitionFiscalPeriod,
+    AssetDeactivationDate,
+    FixedAssetGroup,
+    Supplier,
+    AssetSupplierName,
+    InvestmentOrder,
+    InventoryIsCounted,
+    LastInventoryDate,
+    Inventory,
+    Group1AssetEvaluationKey,
+    Group2AssetEvaluationKey,
+    Group3AssetEvaluationKey,
+    Group4AssetEvaluationKey,
+    Group5AssetEvaluationKey,
+    AssetSerialNumber,
+    WBSElementInternalID,
+    AssetAuthorizationContext,
+    AssetCostCenter,
+    AssetBusinessArea,
+    AssetFund,
+    AssetProfitCenter,
+    AssetSegment,
+    AssetPlant,
+    AssetBudgetPeriod,
+    AssetGrant,
+    AssetCostCtrActivityType,
+    AssetPersonnelNumber,
+    AssetFunctionalArea,
+    AssetLocation,
+    RealEstateObject,
+    AssetFundsCenter,
+    Room,
+    VehicleLicensePlateNumber,
+    TaxJurisdiction,
+    InvestmentSupportMeasure,
+    DepreciationStartDate,
+    SpecialDeprStartDate,
+    DepreciationKey,
+    PlannedUsefulLifeInYears,
+    PlannedUsefulLifeInPeriods,
+    OriglAstUsefulLifeInYears,
+    OriglAstUsefulLifeInPerds,
+    DeprKeyChangeoverYear,
+    DeprKeyChangeoverPeriod,
+    VintageYear,
+    VintageMonth,
+    ReplacementValueIndexSers,
+    RplcmtValueAgingIndexSers,
+    NationalClassification,
+    TaxDepreciationGroup,
+    JP_PrptyTxRptCity,
+    JP_PrptyTxRptClassfctnKey,
+    RU_AssetOKOF,
+    RU_AssetDepreciationGroup
+}
+where
+  AssetAccountingKeyFigureSet = 'AHS'
